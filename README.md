@@ -8,7 +8,7 @@ You need Node 20 or newer, and a TypeSafe key. Looks are SigLIP (`Xenova/siglip-
 ## Run it
 
 ```bash
-git clone https://github.com/Aayan-DEV/aayans-yc-indexor && cd aayans-yc-indexor
+git clone https://github.com/anonthedev/yc-indexor && cd yc-indexor
 npm install
 cp .env.example .env.local
 npm run dev
