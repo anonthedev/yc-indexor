@@ -1,4 +1,4 @@
-# Aayan's-YC-indexor
+# YC-indexor
 
 Describe a YC startup in any words you like and the logos that match float up out of a physics pile, each with how likely it is.
 All 6,241 companies are searchable by what they do, what their logo looks like, and what they say inside it.
