@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * The words printed inside each picture, read once by Apple's Vision (see scripts/read-letters.mjs).
+ * The words printed inside each picture, stored in data/letters.json.
  * The image model cannot read, so this is the only way the app knows whether a logo says anything, and what.
  */
 const FILE = path.join(process.cwd(), "data", "letters.json");

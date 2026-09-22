@@ -11,7 +11,7 @@ export type SearchHit = {
   colors: string[];
   probability: number; // shown on a floating hit: Jev's answer when Jev decided, otherwise the share by looks
   score: number; // final 0..1 share of the library: how much of the match belongs to this image
-  similarity: number; // raw MobileCLIP cosine similarity between the words and the image
+  similarity: number; // raw SigLIP cosine similarity between the words and the image
   jev?: number; // Jev's P(match) from the color words, only when Jev was consulted
 };
 
@@ -26,7 +26,7 @@ export type SearchResponse = {
   ms: number;
   embedMs: number;
   cached: boolean;
-  decidedBy: "mobileclip" | "mobileclip + jev" | "name";
+  decidedBy: "siglip" | "siglip + jev" | "name";
   tokens?: number;
   nominated?: Record<string, unknown>;
   deepened?: string[]; // the tags a second, deeper look followed when the first found nothing convincing

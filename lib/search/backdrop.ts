@@ -1,5 +1,4 @@
 import { embedText } from "@/lib/clip/helper";
-import { tokenize } from "@/lib/clip/tokenizer";
 import type { LibraryItem } from "@/lib/library";
 
 /**
@@ -43,7 +42,7 @@ export async function backdropTable(items: LibraryItem[]): Promise<Table> {
   if (done && items.every((it) => done.ids.has(it.id))) return done;
 
   return (store.__backdropJob = (async () => {
-    const phrases = done?.phrases ?? (await Promise.all(BACKDROP.map((p) => embedText(tokenize(p)))));
+    const phrases = done?.phrases ?? (await Promise.all(BACKDROP.map((p) => embedText(p))));
     const ids = new Map<string, number>();
     const sims = new Float32Array(items.length * BACKDROP.length);
     items.forEach((it, i) => {

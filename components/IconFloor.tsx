@@ -14,7 +14,6 @@ import { popScale } from "./floor/pop";
 import type { Match, Scene } from "./floor/scene";
 import { renderSprite } from "./floor/sprite";
 import { createSwaps } from "./floor/swaps";
-import { createTilt } from "./floor/tilt";
 
 export type { Match };
 
@@ -27,8 +26,6 @@ export type FloorApi = {
   release: () => void;
   /** A new image arrived while the page is open: it drops into the pile from above. */
   add: (src: string) => void;
-  /** Let the MacBook's motion sensor steer gravity, or not. */
-  setMotion: (on: boolean) => void;
 };
 
 type Props = {
@@ -205,7 +202,6 @@ export const IconFloor = memo(function IconFloor({ sources, cells, sheet, apiRef
     (window as unknown as { __floor?: unknown }).__floor = Object.assign(stats, createDebug(scene));
     const overlays = createOverlays(scene, { labels: () => labelRefs.current, tip: () => tipRef.current, frame: () => frameRef.current, clip: () => clipRef.current, content: () => contentRef.current, beam: () => beamRef.current });
     const swaps = createSwaps(scene, (i) => drag.body === bodies[i], stats);
-    const tilt = createTilt(scene);
     const matches = createMatches(scene, overlays, swaps, loadImage);
     Object.assign(stats, { holes: () => matches.holes() });
 
@@ -346,7 +342,7 @@ export const IconFloor = memo(function IconFloor({ sources, cells, sheet, apiRef
       let awake = 0;
       for (let i = 0; i < scene.added; i++) if (!bodies[i].isSleeping) awake++;
       stats.awake = awake;
-      stats.gx = engine.gravity.x; // what the motion sensor has made of gravity, if it is on
+      stats.gx = engine.gravity.x;
       stats.gy = engine.gravity.y;
       if (awake) scene.dirty = true;
       overlays.place(now);
@@ -390,7 +386,6 @@ export const IconFloor = memo(function IconFloor({ sources, cells, sheet, apiRef
         bodies.push(body); // the drop loop adds it to the world on its next tick
         scene.dirty = true;
       },
-      setMotion: (on) => tilt.set(on),
     };
     onReady?.();
 
@@ -420,7 +415,6 @@ export const IconFloor = memo(function IconFloor({ sources, cells, sheet, apiRef
       window.removeEventListener("wheel", onWheel);
       overlays.destroy();
       bounds.destroy();
-      tilt.stop();
       swaps.stop();
       apiRef.current = null;
       Matter.Composite.clear(engine.world, false);

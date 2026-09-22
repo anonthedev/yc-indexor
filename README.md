@@ -3,16 +3,7 @@
 Describe a YC startup in any words you like and the logos that match float up out of a physics pile, each with how likely it is.
 All 6,241 companies are searchable by what they do, what their logo looks like, and what they say inside it.
 
-## You need an Apple Silicon Mac
-
-This is a hard requirement, not a preference. Every search embeds your query with MobileCLIP-S0, and that model is Core ML,
-which only exists on Apple platforms. `native/coreml_embed` is a compiled arm64 binary that loads it and every search goes
-through it. On Linux or Windows the first query throws.
-
-The rest of the stack is portable, so this is fixable if you want it. The same MobileCLIP checkpoint has an ONNX export that
-matches Core ML to a cosine of 0.999914, and `onnxruntime-node` is already a dependency. `NOTES.md` has the measurements.
-
-You also need Node 20 or newer, and a TypeSafe key.
+You need Node 20 or newer, and a TypeSafe key. Looks are SigLIP (`Xenova/siglip-base-patch16-224`), run in Node. Meaning search is bge-small, the same way.
 
 ## Run it
 
@@ -39,25 +30,13 @@ scorer. You can see it in the API response: `degraded: true` and `costUsd: null`
 First start takes about sixteen seconds while the sentence model loads. After that a search is roughly one second and
 costs about a fifth of a cent.
 
-## Optional: tilt the laptop
-
-```bash
-npm run build:motion
-```
-
-That compiles a helper which reads the MacBook's accelerometer and lid angle straight off the HID devices and streams them
-to the page, so tilting the laptop tilts gravity in the pile and shaking it throws the icons. macOS gives browsers no
-motion events, so there is no other way to get at it. Without the helper nothing changes and the pile keeps ordinary gravity.
-
-If either Swift binary refuses to run on your macOS version, rebuild it with `npm run build:native` or `npm run build:motion`.
-
 ## How it finds things
 
 Retrieval is ordinary vector maths over all 6,241 companies, four signals at once:
 
 - **meaning**, bge-small sentence embeddings of each company's write-up
-- **looks**, MobileCLIP-S0 image vectors of the logo itself
-- **letters**, what Apple's Vision OCR read inside the logo
+- **looks**, SigLIP image vectors of the logo itself
+- **letters**, the words already read inside each logo, stored in `data/letters.json`
 - **tags**, YC's own 337 tags, re-applied to every company by Jev because YC's own tagging is patchy
 
 That narrows 6,241 down to at most 320 finalists. Jev then scores every finalist in one parallel request and returns a
@@ -76,4 +55,4 @@ the measurements behind all of it.
 
 ## Licence
 
-The code is [MIT](LICENSE). The logos, the YC data and the Apple models bundled with it are not mine to license; see [NOTICE](NOTICE).
+The code is [MIT](LICENSE). The logos and the YC data bundled with it are not mine to license; see [NOTICE](NOTICE).

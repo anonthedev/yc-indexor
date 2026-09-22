@@ -8,7 +8,7 @@ const cache = new LruCache<Ranked>();
 export async function POST(request: Request) {
   const started = performance.now();
   const body = (await request.json().catch(() => null)) as { query?: unknown; looksOnly?: unknown; noLogo?: Partial<NoLogo> } | null;
-  const looksOnly = body?.looksOnly === true; // for measuring: what MobileCLIP alone would have answered
+  const looksOnly = body?.looksOnly === true; // for measuring: what SigLIP alone would have answered
   // Which companies with no logo of their own to keep. Anything the page does not say stays in.
   const noLogo: NoLogo = { ...ALL_NO_LOGO, ...(body?.noLogo ?? {}) };
   const kept = `${+noLogo.active}${+noLogo.acquired}${+noLogo.closed}`;

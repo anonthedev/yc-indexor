@@ -3,8 +3,8 @@ Set A: the 66 look-only benchmark descriptions (33 with color words, 33 without)
 Set B: descriptions of what a YC company does, or a mix of looks and info. Target = one logo id.
 Usage: python3 eval_search.py [a|b|all]"""
 import json, sys, time, urllib.request
-sys.path.insert(0, "../../experiments/jev_blind_search")
-from queries import QUERIES, QUERIES_NOCOLOR
+# sys.path.insert(0, "../../experiments/jev_blind_search")
+# from queries import QUERIES, QUERIES_NOCOLOR
 
 INFO = {
     "yc_doordash": "app that brings restaurant food to your door", "yc_airbnb": "book a place to stay anywhere in the world",
@@ -27,7 +27,14 @@ MIXED = {
     "yc_dropbox": "blue open box, cloud file storage", "yc_instacart": "carrot logo grocery delivery", "yc_reddit": "alien mascot, internet forum",
 }
 
-LOOKS_ONLY = "--looks-only" in sys.argv  # what MobileCLIP alone answers, for comparison
+SHORT_INFO = {
+    "yc_doordash": INFO["yc_doordash"]
+}
+SHORT_MIXED = {
+    "yc_gitlab": MIXED["yc_gitlab"],
+}
+
+LOOKS_ONLY = "--looks-only" in sys.argv  # what SigLIP alone answers, for comparison
 
 def ask(q):
     req = urllib.request.Request("http://localhost:3000/api/search", data=json.dumps({"query": q, "looksOnly": LOOKS_ONLY}).encode(), headers={"content-type": "application/json"})
@@ -37,8 +44,9 @@ def run(name, pairs, match):
     top1 = top5 = floated = wrong_float = jevs = 0; ms = []; tokens = 0; misses = []
     for target, q in pairs:
         d = ask(q); ids = [h["id"] for h in d["hits"]]
+        print(f"   {q!r} -> {ids[0] if ids else '-'}  {d['decidedBy']}  degraded={d.get('degraded')}  {d['ms']}ms") 
         ok1 = bool(ids) and match(ids[0], target); ok5 = any(match(i, target) for i in ids[:5])
-        top1 += ok1; top5 += ok5; ms.append(d["ms"]); tokens += d.get("tokens") or 0; jevs += d["decidedBy"] == "mobileclip + jev"
+        top1 += ok1; top5 += ok5; ms.append(d["ms"]); tokens += d.get("tokens") or 0; jevs += d["decidedBy"] == "siglip + jev"
         floated += d["confident"] and ok1; wrong_float += d["confident"] and not ok1
         if not ok1: misses.append((q, target, ids[:3], d["decidedBy"], d["confident"]))
     n = len(pairs); ms.sort()
@@ -53,5 +61,6 @@ if which in ("a", "all"):
     run("looks, with color words", list(QUERIES.items()), starts)
     run("looks, no color words  ", list(QUERIES_NOCOLOR.items()), starts)
 if which in ("b", "all"):
-    run("what the company does  ", list(INFO.items()), same)
-    run("looks + info mixed     ", list(MIXED.items()), same)
+    info, mixed = (SHORT_INFO, SHORT_MIXED) if "--short" in sys.argv else (INFO, MIXED)
+    run("what the company does  ", list(info.items()), same)
+    run("looks + info mixed     ", list(mixed.items()), same)

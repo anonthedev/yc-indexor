@@ -16,7 +16,6 @@ python install.py                # copy logos + placeholders into ../../public/i
 Then back in the project root, rebuild what the app derives from it:
 
 ```bash
-node scripts/read-letters.mjs    # OCR the words inside each logo
 node scripts/tag-companies.mjs   # Jev re-tags every company (needs TYPE_SAFE_KEY, about $0.80)
 node scripts/build-meaning.mjs   # sentence vectors for every company
 npm run atlas                    # repack the sprite sheet

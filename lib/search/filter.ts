@@ -1,5 +1,4 @@
 import { embedText } from "@/lib/clip/helper";
-import { tokenize } from "@/lib/clip/tokenizer";
 import { judge, type When } from "@/lib/jev/judge";
 import type { LibraryItem } from "@/lib/library";
 import { backdropTable, contest } from "./backdrop";
@@ -45,7 +44,7 @@ export async function byLooks(items: LibraryItem[], query: string, queryVector: 
   const table = await backdropTable(items);
   const best = contest(table, queryVector, sims);
   for (const said of phrasings(query).slice(1)) {
-    const v = await embedText(tokenize(said));
+    const v = await embedText(said);
     const mine = items.map((it) => {
       let s = 0;
       for (let k = 0; k < v.length; k++) s += it.vector[k] * v[k];

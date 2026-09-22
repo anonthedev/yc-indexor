@@ -1,5 +1,4 @@
 import { embedText } from "@/lib/clip/helper";
-import { tokenize } from "@/lib/clip/tokenizer";
 import { judge } from "@/lib/jev/judge";
 import { ONLY_LOOKS, OTHER, understand } from "@/lib/jev/understand";
 import { lettersFor, lettersKnown } from "@/lib/letters";
@@ -76,7 +75,7 @@ const topOf = (scores: number[], n: number, min = 0) => scores.map((s, i) => ({ 
 
 /**
  * 1. A description that is just a company's name picks that logo.
- * 2. MobileCLIP scores the looks of every image.
+ * 2. SigLIP scores the looks of every image.
  * 3. Jev first works out what kind of company a vague description is about, five channels nominate finalists
  *    (looks, shared words, similar meaning, Jev's categories, well-known companies), and Jev reads each finalist's info and colors in one call.
  * 4. Among finalists that fit equally well, the better-known company comes first.
@@ -96,7 +95,7 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
   // costs whichever is slower instead of their sum: 14.9 ms became 8.4 ms.
   const asking = embedAsking(query); // the sentence model, started now and awaited where it is needed
   asking.catch(() => {}); // a rejection is handled at the await; this only stops Node calling it unhandled meanwhile
-  const q = await embedText(tokenize(query));
+  const q = await embedText(query);
   const embedMs = performance.now() - t0;
 
   // Looks: cosine similarity against every image, then CLIP's own softmax, so each image gets its share of the match.
@@ -119,7 +118,7 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
   let standing = looks.map((e) => e / sum); // what the hits are sorted by
   let probability = [...standing]; // what is shown on a floating hit
   const jev: (number | undefined)[] = items.map(() => undefined);
-  let decidedBy: Ranked["decidedBy"] = "mobileclip";
+  let decidedBy: Ranked["decidedBy"] = "siglip";
   let tokens: number | undefined;
   let nominated: Record<string, unknown> | undefined; // which channel put which finalist forward, for the accuracy scripts
   let fitting = -1; // how many Jev said fit, when Jev decided
@@ -136,11 +135,11 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
     decidedBy = "name";
   } else if (items.length > 1 && !looksOnly) {
     const index = textIndex(items, version);
-    // Two readings of the same words: MobileCLIP's, which lives in the same space as the pictures, and a real sentence
+    // Two readings of the same words: SigLIP's, which lives in the same space as the pictures, and a real sentence
     // model's, which is the one that can tell that "scraping platform" and "structured data from any website" agree.
     const text = textScores(index, query, await asking);
-    // MobileCLIP being sure is not enough with thousands of logos: it was "sure" that a smart watch is some unrelated
-    // logo. So Jev always gets a say, unless it says itself that the description is only about looks.
+    // SigLIP being sure is not enough with thousands of logos: the looks model was "sure" that a smart watch is some
+    // unrelated logo. So Jev always gets a say, unless it says itself that the description is only about looks.
     {
       const lexical = items.map((it, i) => shown(i) * (text.byId.get(it.id)?.lexical ?? 0));
       const meaning = items.map((it, i) => shown(i) * (text.byId.get(it.id)?.meaning ?? 0));
@@ -251,9 +250,9 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
       // whether it qualifies, so the result can be one image or five hundred. Nothing is shortlisted and nothing competes.
       if (every) {
         mode = "all";
-        decidedBy = "mobileclip + jev";
+        decidedBy = "siglip + jev";
         if (aboutText && lettersKnown() > 0) {
-          // Only Vision knows what a picture says. Asking the image model gave 2% of the logos that are nothing but letters.
+          // The image model cannot read. Asking it for "a logo with letters in it" found 2% of the logos that are nothing but letters.
           // "logos with letters in them" wants every logo that says anything. "logos that say pay" wants the ones that
           // say that, so a word of their own that is not just talk about writing turns this from a sweep into a search.
           // Only when they want writing: you cannot ask which words are in a picture that has none.
@@ -365,7 +364,7 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
         tokens = (tokens ?? 0) + verdict.tokens;
         // Looks are the starting belief and Jev's answer is the evidence, measured against the typical finalist.
         // When Jev has no real opinion (a look-only description leaves every answer in one narrow band) the evidence
-        // is dropped and MobileCLIP's order stands.
+        // is dropped and SigLIP's order stands.
         const sorted = [...verdict.scores].sort((x, y) => x - y);
         const typical = Math.min(0.9, Math.max(0.05, sorted[Math.floor(sorted.length / 2)])); // from the shortlist only: most of the 91 do not fit, and would drag it down
         if (second) {
@@ -382,7 +381,7 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
         const hasOpinion = !onlyLooks || highest - typical >= OPINION || highest >= 0.8 || odds(highest) / odds(typical) >= EVIDENCE;
         finalists.forEach((i, k) => (jev[i] = verdict.scores[k]));
         if (hasOpinion) {
-          decidedBy = "mobileclip + jev";
+          decidedBy = "siglip + jev";
           const fused = standing.map((s) => s * 0.001);
           finalists.forEach((i, k) => (fused[i] = Math.max(looks[i] ** 0.35, FLOOR) * (odds(verdict.scores[k]) / odds(typical)) * (verdict.scores[k] < FITS ? 1 : known[i] === 1 ? TOP_LIFT : 1 + FAME_LIFT * known[i]))); // being well known only helps a company that fits
           const total = fused.reduce((a, b) => a + b, 0);
@@ -428,7 +427,7 @@ export async function rank(query: string, looksOnly = false, noLogo: NoLogo = AL
     // Looks decided. The companies found by name join in with Jev's probability, wherever that beats their looks.
     standing = standing.map((s, i) => Math.max(s, nameFit[i] ?? 0));
     probability = standing;
-    decidedBy = "mobileclip + jev";
+    decidedBy = "siglip + jev";
   }
 
   // When Jev decided, the ones that fit come first (best standing first among them), and only then is the list cut:

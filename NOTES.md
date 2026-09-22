@@ -1,6 +1,8 @@
 # Icon Recall
 
-Describe a startup the way you half remember it. MobileCLIP finds it, and Jev breaks ties on color.
+Describe a startup the way you half remember it. SigLIP finds it by looks, and Jev breaks ties.
+
+The notes below were written when looks ran on MobileCLIP through Core ML, and when a MacBook tilt helper steered the pile. Both are gone. Looks are SigLIP in Node (`lib/clip/helper.ts`), and gravity stays straight down. Treat the measurements as the record of that earlier build.
 
 ## How it works
 

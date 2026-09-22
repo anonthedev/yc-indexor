@@ -43,13 +43,10 @@ export function SearchExperience({ icons, indexed, sheet }: { icons: { id: strin
   // A dropped image falls into the pile the moment the server says it is searchable.
   const { dragging, progress } = useImageDrop(useCallback((entry: LibraryEntry) => floor.current?.add(entry.src), []));
 
-  // The MacBook's motion sensor steering gravity, and which of the 624 companies YC has no logo for to keep. Both are
-  // remembered on this machine.
-  const [motion, setMotion] = useState(true);
+  // Which of the companies YC has no logo for to keep. Remembered on this machine.
   const [noLogo, setNoLogo] = useState({ active: true, acquired: true, closed: true });
   useEffect(() => {
     try {
-      if (localStorage.getItem("icon-recall:motion") === "off") setMotion(false);
       const many = Number(localStorage.getItem("icon-recall:pile"));
       if (Number.isFinite(many) && many >= 100) {
         setPile(many);
@@ -190,8 +187,6 @@ export function SearchExperience({ icons, indexed, sheet }: { icons: { id: strin
       <IconFloor sources={sources} cells={cells} sheet={sheet} apiRef={floor} onReady={onFloorReady} />
       <DropZone dragging={dragging} progress={progress} />
       <Settings
-        motion={motion}
-        setMotion={setMotion}
         noLogo={noLogo}
         setNoLogo={setNoLogo}
         icons={sliding}

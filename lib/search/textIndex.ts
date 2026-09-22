@@ -8,7 +8,7 @@ import { metaFor, type ImageMeta } from "@/lib/meta";
 
 /**
  * What is written about each image (company name, tagline, tags, long description, industry, place, batch), made findable two ways:
- * by shared words (exact, instant) and by meaning (the same MobileCLIP text encoder, so "food brought to your door"
+ * by shared words (exact, instant) and by meaning (bge-small, so "food brought to your door"
  * lands near "restaurant delivery"). Both only shortlist. Jev makes the actual judgement.
  */
 type Doc = { id: string; meta: ImageMeta; category: string; words: Map<string, number>; vector: Float32Array | null };
@@ -40,8 +40,7 @@ const brief = (text: string | undefined, max: number) => {
 export const infoLine = (m: ImageMeta, detail = 420) =>
   [`${m.name}${m.tagline ? `: ${m.tagline}` : ""}`, m.tags?.join(", "), [m.subindustry, m.industry].filter(Boolean).join(", "), m.location, m.batch && `Y Combinator ${m.batch}`, brief(m.description, detail)].filter(Boolean).join(" | ");
 
-/** What the meaning-vector is made from. MobileCLIP reads 77 tokens, so the most telling parts come first. */
-// bge reads 512 tokens, so there is no reason to cut this down the way CLIP's 77 forced.
+/** What the meaning-vector is made from. bge reads 512 tokens, so the write-up is not cut down. */
 export const meaningText = (m: ImageMeta, alsoTags: string[] = []) =>
   `${m.name}. ${m.tagline} ${[...new Set([...(m.tags ?? []), ...alsoTags])].join(", ")}. ${m.subindustry}. ${m.description ?? ""}`.replace(/\s+/g, " ").trim();
 
@@ -97,7 +96,7 @@ export function textIndex(items: LibraryItem[], version: number): Index {
     for (const w of words(`${meta.tagline} ${meta.tags?.join(" ") ?? ""}`)) bag.set(w, (bag.get(w) ?? 0) + 2); // what the company says it is, in its own short words
     for (const w of words(jevTagsFor(item.id).join(" "))) bag.set(w, (bag.get(w) ?? 0) + 2); // and what Jev says it actually does
     for (const w of words(`${meta.description ?? ""} ${meta.subindustry} ${meta.industry} ${meta.location} ${meta.batch}`)) bag.set(w, (bag.get(w) ?? 0) + 1);
-    for (const w of words(lettersFor(item.id) ?? "")) bag.set(w, (bag.get(w) ?? 0) + 2); // what the logo itself says, read by Vision
+    for (const w of words(lettersFor(item.id) ?? "")) bag.set(w, (bag.get(w) ?? 0) + 2); // what the logo itself says, from data/letters.json
     for (const w of bag.keys()) seenIn.set(w, (seenIn.get(w) ?? 0) + 1);
     docs.set(item.id, { id: item.id, meta, category: categoryOf(meta), words: bag, vector: vectors.get(item.id) ?? null });
   }

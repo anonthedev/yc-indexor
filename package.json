@@ -6,11 +6,9 @@
     "node": ">=20.9"
   },
   "scripts": {
-    "build:native": "swiftc -O native/coreml_embed.swift -o native/coreml_embed",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "build:motion": "swiftc -O native/motion.swift -o native/motion",
     "atlas": "node scripts/build-atlas.mjs"
   },
   "dependencies": {
@@ -22,6 +20,7 @@
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sharp": "^0.35.4",
     "thinking-orbs": "^0.3.1",
     "voice-glow": "^0.2.0"
   },
